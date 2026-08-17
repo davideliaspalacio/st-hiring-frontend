@@ -46,3 +46,51 @@ Build a form that reads and updates a settings object via the backend API (`GET 
 - The layout should be responsive
 - Use Redux to manage the settings state
 - Use Formik for the form and Yup for validation
+
+---
+
+# Implementation
+
+Two views behind MUI tabs. No router is installed and the brief rules out new dependencies, so tabs stand in for routes; both panels stay mounted, so switching does not refetch.
+
+## Events
+
+A responsive card grid — one column on phones, two on tablets, three on desktop — showing name, date, location, description and a chip with the number of tickets still available.
+
+Paging metadata is stored from the response rather than from what was requested, so a page the server clamped is reflected in the controls. Only the first load shows a spinner: later page changes keep the current page visible at reduced opacity so the layout does not jump. A failed request renders a retry action instead of an empty screen.
+
+## Settings
+
+A Formik form validated by a Yup schema that mirrors the rules the API enforces, so the user is told what is wrong before a round trip — the server still validates, this is convenience rather than trust.
+
+The form reinitialises once the request resolves, since the initial values only arrive after the first render, and it stores the response rather than the submitted values so it never diverges from what was actually persisted. A rejected save surfaces the API's own message, which lists every invalid field.
+
+## Data flow
+
+```mermaid
+flowchart LR
+  subgraph ui["Components"]
+    el["EventsList"]
+    sf["SettingsForm"]
+  end
+
+  subgraph rtk["Redux Toolkit"]
+    et["fetchEvents"]
+    st["fetchSettings<br/>saveSettings"]
+    es[("events state")]
+    ss[("settings state")]
+  end
+
+  api["Backend API"]
+
+  el --> et --> api
+  api --> es --> el
+  sf --> st --> api
+  api --> ss --> sf
+```
+
+Thunks call relative paths on purpose: the Vite dev server proxies `/events` and `/settings` to the API, and an absolute URL would bypass the proxy and trigger CORS.
+
+## Note on the API contract
+
+`GET /events` is consumed as a paginated envelope (`data`, `page`, `pageSize`, `total`, `totalPages`), and each event carries `availableTicketsCount` rather than the full ticket rows. This matches the backend in the companion repository.
