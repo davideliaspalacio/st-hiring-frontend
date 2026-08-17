@@ -85,3 +85,13 @@ Thunks call relative paths on purpose: the Vite dev server proxies `/events` and
 ## Note on the API contract
 
 `GET /events` is consumed as a paginated envelope (`data`, `page`, `pageSize`, `total`, `totalPages`), and each event carries `availableTicketsCount` rather than the full ticket rows. This matches the backend in the companion repository.
+
+## Possible improvements
+
+Things worth doing next, left out to keep this change focused:
+
+- **Tests.** No testing library is installed. Vitest and React Testing Library would reuse the existing Vite config, covering both slices and their thunks, and the card, list and form components.
+- **Availability against capacity.** Cards show how many tickets are left but not out of how many, so "159 available" reads the same for a quiet event and one about to sell out. It needs the backend to expose the total as well.
+- **`salesEnabled` is never applied.** Settings describe how tickets are sold, yet the events view ignores them. With sales disabled the list could say so instead of advertising availability.
+- **Pages are refetched every time.** Going back to a page already visited hits the API again; caching by page number would avoid the round trip.
+- **Routing.** Tabs stand in for routes, so a view cannot be linked to or reloaded in place. A router would fix both if the app grew.
