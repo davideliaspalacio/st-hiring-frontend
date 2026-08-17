@@ -69,24 +69,15 @@ The form reinitialises once the request resolves, since the initial values only 
 
 ```mermaid
 flowchart LR
-  subgraph ui["Components"]
-    el["EventsList"]
-    sf["SettingsForm"]
-  end
+  ui["EventsList<br/>SettingsForm"]
+  thunk["Thunks<br/>fetchEvents · fetchSettings · saveSettings"]
+  api["Backend API<br/>via Vite proxy"]
+  slice[("eventsSlice<br/>settingsSlice")]
 
-  subgraph rtk["Redux Toolkit"]
-    et["fetchEvents"]
-    st["fetchSettings<br/>saveSettings"]
-    es[("events state")]
-    ss[("settings state")]
-  end
-
-  api["Backend API"]
-
-  el --> et --> api
-  api --> es --> el
-  sf --> st --> api
-  api --> ss --> sf
+  ui -->|"dispatch"| thunk
+  thunk -->|"fetch"| api
+  api -->|"response"| slice
+  slice -->|"useAppSelector"| ui
 ```
 
 Thunks call relative paths on purpose: the Vite dev server proxies `/events` and `/settings` to the API, and an absolute URL would bypass the proxy and trigger CORS.
